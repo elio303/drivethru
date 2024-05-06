@@ -7,15 +7,16 @@ from time import sleep
 import numpy as np
 import speech_recognition as sr
 
-from typing import Final
+SAMPLE_RATE = 44100
+SILENCE_THRESHOLD = 1500
+WAIT_FOR_SOUND_SEC = 5
+LLM_CLIENT_URL = "http://localhost:1234/v1"
+LLM_CLIENT_API_KEY = "lm-studio"
+LLM_CLIENT_MODEL = "LM Studio Community/Phi-3-mini-4k-instruct-GGUF"
+LLM_CLIENT_CONTEXT = (
+    "You are a drive-through attendant at Starbucks. You do not speak for user."
+)
 
-SAMPLE_RATE: Final[int] = 44100
-SILENCE_THRESHOLD: Final[int] = 1500
-WAIT_FOR_SOUND_SEC: Final[int] = 5
-LLM_CLIENT_URL: Final[str] = "http://localhost:1234/v1"
-LLM_CLIENT_API_KEY: Final[str] = "lm-studio"
-LLM_CLIENT_MODEL: Final[str] = "LM Studio Community/Phi-3-mini-4k-instruct-GGUF"
-LLM_CLIENT_CONTEXT: Final[str] = "You are a drive-through attendant at Starbucks. You do not speak for user."
 
 class AudioRecorder:
     @staticmethod
@@ -25,7 +26,7 @@ class AudioRecorder:
         while True:
             audio_batch = AudioRecorder._record_with_defaults(1)
             combined_audio = np.concatenate((initial_audio, audio_batch))
-            
+
             if np.max(audio_batch) < SILENCE_THRESHOLD:
                 break
 
@@ -35,13 +36,15 @@ class AudioRecorder:
     def _record_with_defaults(wait_time_seconds: int) -> np.ndarray[float]:
         audio = sd.rec(
             int(wait_time_seconds * SAMPLE_RATE),
-            samplerate = SAMPLE_RATE,
-            channels = 1,
-            dtype = "int16")
-        
+            samplerate=SAMPLE_RATE,
+            channels=1,
+            dtype="int16",
+        )
+
         sd.wait()
 
         return audio
+
 
 class AudioPlayer:
     def __init__(self):
@@ -55,18 +58,20 @@ class AudioPlayer:
         else:
             self._music_player.load(audio_file)
             self._music_player.play()
-    
+
     def wait_til_audio_ends(self) -> None:
         while self._music_player.get_busy():
             continue
 
+
 class TTSProvider:
     def text_to_speech(self, text: str) -> BytesIO:
-        tts = gTTS(text = text, lang="en")
+        tts = gTTS(text=text, lang="en")
         audio_bytes = BytesIO()
         tts.write_to_fp(audio_bytes)
         audio_bytes.seek(0)
         return audio_bytes
+
 
 class STTProvider:
     def __init__(self):
@@ -85,6 +90,7 @@ class STTProvider:
 
         return text
 
+
 class LLMClient:
     def __init__(self):
         self._client = OpenAI(base_url=LLM_CLIENT_URL, api_key=LLM_CLIENT_API_KEY)
@@ -92,20 +98,23 @@ class LLMClient:
             {"role": "system", "content": LLM_CLIENT_CONTEXT},
         ]
 
-    def stream_response(self, prompt: str, assistant_response: str = "") -> OpenAI.Stream[OpenAI.ChatCompletionChunk]:
+    def stream_response(
+        self, prompt: str, assistant_response: str = ""
+    ) -> OpenAI.Stream[OpenAI.ChatCompletionChunk]:
         if assistant_response != "":
             self._history.append({"role": "assistant", "content": assistant_response})
-        
+
         self._history.append({"role": "user", "content": prompt})
 
         response = self._client.chat.completions.create(
-            model = LLM_CLIENT_MODEL,
-            messages = self._history,
-            temperature = 0.0,
-            stream = True,
+            model=LLM_CLIENT_MODEL,
+            messages=self._history,
+            temperature=0.0,
+            stream=True,
         )
 
         return response
+
 
 class Main:
     def __init__(self):
@@ -113,13 +122,15 @@ class Main:
         self.audio_player = AudioPlayer()
         self.tts_provider = TTSProvider()
         self.stt_provider = STTProvider()
-    
+
     def run(self):
         user_prompt = "Hello."
         assistant_response = ""
 
         while True:
-            response_stream = self.llm_client.stream_response(user_prompt, assistant_response)
+            response_stream = self.llm_client.stream_response(
+                user_prompt, assistant_response
+            )
 
             assistant_response = ""
             current_sentence = ""
@@ -134,7 +145,9 @@ class Main:
                             remainder = the_list[-1]
                             current_sentence += full_words
 
-                            audio_bytes = self.tts_provider.text_to_speech(current_sentence)
+                            audio_bytes = self.tts_provider.text_to_speech(
+                                current_sentence
+                            )
                             self.audio_player.queue_sound(audio_bytes)
 
                             current_sentence = remainder
@@ -142,7 +155,7 @@ class Main:
                             break
                     if not found_mark:
                         current_sentence += current_content
-                
+
                     print(current_content, end="", flush=True)
                     assistant_response += current_content
 
@@ -154,5 +167,6 @@ class Main:
             user_prompt = self.stt_provider.speech_to_text(audio_bytes)
 
             print(user_prompt)
+
 
 Main().run()
