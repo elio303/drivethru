@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "drivethru"
+version = "0.1.0"
+description = ""
+authors = ["Elio Kazu Mostero", "Corey Ryan Mostero"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+openai = "^1.25.1"
+gtts = "^2.5.1"
+pygame = "^2.5.2"
+sounddevice = "^0.4.6"
+numpy = "^1.26.4"
+speechrecognition = "^3.10.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
