@@ -13,6 +13,7 @@ gtts = "^2.5.1"
 pygame = "^2.5.2"
 sounddevice = "^0.4.6"
 numpy = "^1.26.4"
+speechrecognition = "^3.10.4"
 
 
 [build-system]
