@@ -4,8 +4,9 @@ import sounddevice as sd
 import speech_recognition as sr
 from io import BytesIO
 from openai import AssistantEventHandler, OpenAI
+from openai.types.beta.threads import TextContentBlock
 from time import sleep
-from typing import Final
+from typing import Final, cast
 from typing_extensions import override
 
 RECORDING_SAMPLE_RATE: Final[int] = 44100
@@ -45,14 +46,14 @@ ENV_LEVEL = "DEBUG"
 
 class Logger:
     @staticmethod
-    def debug(message):
+    def debug(message: str) -> None:
         if ENV_LEVEL == "DEBUG":
             print(message, end="", flush=True)
 
 
 class AudioRecorder:
     @staticmethod
-    def record() -> BytesIO:
+    def record() -> sr.AudioData:
         initial_audio = AudioRecorder._record_with_defaults(WAIT_FOR_SOUND_SEC)
 
         while True:
@@ -67,8 +68,8 @@ class AudioRecorder:
         )
 
     @staticmethod
-    def _record_with_defaults(wait_time_seconds: int) -> np.ndarray[float]:
-        audio = sd.rec(
+    def _record_with_defaults(wait_time_seconds: int) -> np.typing.NDArray[np.float64]:
+        audio: np.typing.NDArray[np.float64] = sd.rec(
             int(wait_time_seconds * RECORDING_SAMPLE_RATE),
             samplerate=RECORDING_SAMPLE_RATE,
             channels=1,
@@ -127,15 +128,19 @@ class STTProvider:
 
 
 class MockAssistant:
-    def __init__(self, openai, name, instructions, tts_provider: TTSProvider):
+    def __init__(
+        self, openai: OpenAI, name: str, instructions: str, tts_provider: TTSProvider
+    ) -> None:
         self._tts_provider = tts_provider
 
-    def prompt(self, _):
+    def prompt(self) -> str:
         return "Welcome to Starbucks! What can I get started for you today?"
 
 
 class Assistant:
-    def __init__(self, openai: OpenAI, name, instructions, tts_provider: TTSProvider):
+    def __init__(
+        self, openai: OpenAI, name: str, instructions: str, tts_provider: TTSProvider
+    ) -> None:
         client = OpenAI(
             api_key=API_KEY,
             organization=ORG_ID,
@@ -151,7 +156,7 @@ class Assistant:
         )
         self._tts_provider = tts_provider
 
-    def prompt(self, message):
+    def prompt(self, message: str) -> str:
         self._client.messages.create(
             thread_id=self._thread.id,
             role="user",
@@ -166,13 +171,14 @@ class Assistant:
 
         if run.status == "completed":
             messages = self._client.messages.list(thread_id=self._thread.id)
-            return messages.data[0].content[0].text.value
+            message_content = cast(TextContentBlock, messages.data[0].content[0])
+            return str(message_content.text.value)
         else:
             return "Please speak to a customer service agent, as our AI assistant is currently unavailable."
 
 
 class Main:
-    def __init__(self):
+    def __init__(self) -> None:
         self._py_audio = pyaudio.PyAudio()
         self._audio_player = AudioPlayer(self._py_audio)
         self._client = OpenAI(
@@ -190,7 +196,7 @@ class Main:
             self._tts_provider,
         )
 
-    def run(self):
+    def run(self) -> None:
         user_prompt = "Hello."
 
         while True:
