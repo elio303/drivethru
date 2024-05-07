@@ -134,9 +134,6 @@ class Main:
             response_stream = self.llm_client.stream_response(
                 user_prompt, assistant_response
             )
-            response_stream = self.llm_client.stream_response(
-                user_prompt, assistant_response
-            )
 
             assistant_response = ""
             current_sentence = ""
