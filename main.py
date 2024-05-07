@@ -51,7 +51,7 @@ class Logger:
 
 class AudioRecorder:
     @staticmethod
-    def record() -> sr.AudioData:
+    def record() -> BytesIO:
         initial_audio = AudioRecorder._record_with_defaults(WAIT_FOR_SOUND_SEC)
 
         while True:
