@@ -50,7 +50,7 @@ class AudioRecorder:
 
 
 class AudioPlayer:
-    def __init__(self):
+    def __init__(self) -> None:
         pygame.init()
         pygame.mixer.init()
         self._music_player = pygame.mixer.music
@@ -77,7 +77,7 @@ class TTSProvider:
 
 
 class STTProvider:
-    def __init__(self):
+    def __init__(self) -> None:
         self._google_audio_recognizer = sr.Recognizer()
 
     def speech_to_text(self, audio_bytes: BytesIO) -> str:
@@ -95,7 +95,7 @@ class STTProvider:
 
 
 class LLMClient:
-    def __init__(self):
+    def __init__(self) -> None:
         self._client = OpenAI(base_url=LLM_CLIENT_URL, api_key=LLM_CLIENT_API_KEY)
         self._history = [
             {"role": "system", "content": LLM_CLIENT_CONTEXT},
@@ -120,7 +120,7 @@ class LLMClient:
 
 
 class Main:
-    def __init__(self):
+    def __init__(self) -> None:
         self.llm_client = LLMClient()
         self.audio_player = AudioPlayer()
         self.tts_provider = TTSProvider()
