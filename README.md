@@ -6,14 +6,14 @@ This project attempts to mimic a cashier or drive-thru attendant. It does so by 
 ## Install global dependencies
 ```
 xcode-select --install
-brew install python3 poetry
+brew install python3 poetry portaudio
 ```
 
 ## Install local dependencies
 ```
 cd {WORKING_DIRECTORY}
 python3 -m venv .venv
-source .venv/bin/activate
+poetry shell
 poetry install
 ```
 
