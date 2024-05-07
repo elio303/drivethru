@@ -92,7 +92,7 @@ class LLMClient:
             {"role": "system", "content": LLM_CLIENT_CONTEXT},
         ]
 
-    def stream_response(self, prompt: str, assistant_response: str = "") -> OpenAI.ChatCompletion | OpenAI.Stream[OpenAI.ChatCompletionChunk]:
+    def stream_response(self, prompt: str, assistant_response: str = "") -> OpenAI.Stream[OpenAI.ChatCompletionChunk]:
         if assistant_response != "":
             self._history.append({"role": "assistant", "content": assistant_response})
         
