@@ -151,9 +151,6 @@ class Main:
                             audio_bytes = self.tts_provider.text_to_speech(
                                 current_sentence
                             )
-                            audio_bytes = self.tts_provider.text_to_speech(
-                                current_sentence
-                            )
                             self.audio_player.queue_sound(audio_bytes)
 
                             current_sentence = remainder
