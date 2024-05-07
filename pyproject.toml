@@ -16,6 +16,10 @@ numpy = "^1.26.4"
 speechrecognition = "^3.10.4"
 
 
+[tool.poetry.group.dev.dependencies]
+black = "^24.4.2"
+mypy = "^1.10.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
