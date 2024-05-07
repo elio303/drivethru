@@ -1,13 +1,11 @@
 import numpy as np
+import numpy.typing
 import pyaudio
 import sounddevice as sd
 import speech_recognition as sr
-from io import BytesIO
-from openai import AssistantEventHandler, OpenAI
+from openai import OpenAI
 from openai.types.beta.threads import TextContentBlock
-from time import sleep
 from typing import Final, cast
-from typing_extensions import override
 
 RECORDING_SAMPLE_RATE: Final[int] = 44100
 PLAYBACK_SAMPLE_RATE: Final[int] = 24000
