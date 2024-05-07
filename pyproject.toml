@@ -15,6 +15,7 @@ sounddevice = "^0.4.6"
 numpy = "^1.26.4"
 speechrecognition = "^3.10.4"
 pre-commit = "^3.7.0"
+pyaudio = "^0.2.14"
 
 
 [tool.poetry.group.dev.dependencies]
