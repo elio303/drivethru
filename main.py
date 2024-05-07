@@ -1,4 +1,6 @@
 from openai import OpenAI
+from openai.types.chat import ChatCompletionChunk
+from openai._streaming import Stream
 from gtts import gTTS
 from io import BytesIO
 import pygame
@@ -6,14 +8,15 @@ import sounddevice as sd
 from time import sleep
 import numpy as np
 import speech_recognition as sr
+from typing import Final
 
-SAMPLE_RATE = 44100
-SILENCE_THRESHOLD = 1500
-WAIT_FOR_SOUND_SEC = 5
-LLM_CLIENT_URL = "http://localhost:1234/v1"
-LLM_CLIENT_API_KEY = "lm-studio"
-LLM_CLIENT_MODEL = "LM Studio Community/Phi-3-mini-4k-instruct-GGUF"
-LLM_CLIENT_CONTEXT = (
+SAMPLE_RATE: Final[int] = 44100
+SILENCE_THRESHOLD: Final[int] = 1500
+WAIT_FOR_SOUND_SEC: Final[int] = 5
+LLM_CLIENT_URL: Final[str] = "http://localhost:1234/v1"
+LLM_CLIENT_API_KEY: Final[str] = "lm-studio"
+LLM_CLIENT_MODEL: Final[str] = "LM Studio Community/Phi-3-mini-4k-instruct-GGUF"
+LLM_CLIENT_CONTEXT: Final[str] = (
     "You are a drive-through attendant at Starbucks. You do not speak for user."
 )
 
@@ -33,8 +36,8 @@ class AudioRecorder:
         return sr.AudioData(combined_audio.flatten().tobytes(), SAMPLE_RATE, 2)
 
     @staticmethod
-    def _record_with_defaults(wait_time_seconds: int) -> np.ndarray[float]:
-        audio = sd.rec(
+    def _record_with_defaults(wait_time_seconds: int) -> np.typing.NDArray[np.float64]:
+        audio: np.typing.NDArray[np.float64] = sd.rec(
             int(wait_time_seconds * SAMPLE_RATE),
             samplerate=SAMPLE_RATE,
             channels=1,
@@ -100,13 +103,13 @@ class LLMClient:
 
     def stream_response(
         self, prompt: str, assistant_response: str = ""
-    ) -> OpenAI.Stream[OpenAI.ChatCompletionChunk]:
+    ) -> Stream[ChatCompletionChunk]:
         if assistant_response != "":
             self._history.append({"role": "assistant", "content": assistant_response})
 
         self._history.append({"role": "user", "content": prompt})
 
-        response = self._client.chat.completions.create(
+        response: Stream[ChatCompletionChunk] = self._client.chat.completions.create(
             model=LLM_CLIENT_MODEL,
             messages=self._history,
             temperature=0.0,
@@ -123,11 +126,14 @@ class Main:
         self.tts_provider = TTSProvider()
         self.stt_provider = STTProvider()
 
-    def run(self):
+    def run(self) -> None:
         user_prompt = "Hello."
         assistant_response = ""
 
         while True:
+            response_stream = self.llm_client.stream_response(
+                user_prompt, assistant_response
+            )
             response_stream = self.llm_client.stream_response(
                 user_prompt, assistant_response
             )
@@ -145,6 +151,9 @@ class Main:
                             remainder = the_list[-1]
                             current_sentence += full_words
 
+                            audio_bytes = self.tts_provider.text_to_speech(
+                                current_sentence
+                            )
                             audio_bytes = self.tts_provider.text_to_speech(
                                 current_sentence
                             )
