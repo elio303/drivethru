@@ -180,8 +180,14 @@ class OpenAICredentials(TypedDict):
 
 class CommandLineArguments:
     def __init__(self) -> None:
-        # arguments TypedDict must be created using functional syntax as the keynames
-        # use invalid identifiers (hyphen)
+        """
+        command line arguments are to be appended to the dictionary as (key: str, str).
+        e.g.:
+        {
+            "env-path": str,
+            "help": str,
+        }
+        """
         Arguments = TypedDict(
             "Arguments",
             {
