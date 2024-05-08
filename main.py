@@ -1,11 +1,14 @@
 import numpy as np
 import numpy.typing
+import os
 import pyaudio
 import sounddevice as sd
 import speech_recognition as sr
+import sys
+from dotenv import load_dotenv
 from openai import OpenAI
 from openai.types.beta.threads import TextContentBlock
-from typing import Final, cast
+from typing import Final, Literal, TypedDict, cast
 
 RECORDING_SAMPLE_RATE: Final[int] = 44100
 PLAYBACK_SAMPLE_RATE: Final[int] = 24000
@@ -35,11 +38,8 @@ LLM_CLIENT_PROGRAM_CONTEXT: Final[str] = (
     6. You can only produce the json order history and nothing else."
 )
 
-API_KEY = "sk-proj-f23rt0ggTQSRCkaF42K1T3BlbkFJkONquEQE07srMUAYcO3u"
-ORG_ID = "org-juvKipYAYRMMLBRSMICCfD32"
-PROJ_ID = "proj_7ha00Sn8B48Upyo3f0VFjUE8"
+ENV_LEVEL: Literal["DEBUG"] | Literal["PRODUCTION"] = "DEBUG"
 MODEL = "gpt-3.5-turbo-1106"
-ENV_LEVEL = "DEBUG"
 
 
 class Logger:
@@ -139,11 +139,8 @@ class Assistant:
     def __init__(
         self, openai: OpenAI, name: str, instructions: str, tts_provider: TTSProvider
     ) -> None:
-        client = OpenAI(
-            api_key=API_KEY,
-            organization=ORG_ID,
-            project=PROJ_ID,
-        ).beta
+        self._command_line_arguments = CommandLineArguments()
+        client = OpenAI(**self._command_line_arguments.open_ai_credentials()).beta
         client = openai.beta
         self._client = client.threads
         self._thread = self._client.create()
@@ -175,15 +172,57 @@ class Assistant:
             return "Please speak to a customer service agent, as our AI assistant is currently unavailable."
 
 
+class OpenAICredentials(TypedDict):
+    api_key: str
+    organization: str
+    project: str
+
+
+class CommandLineArguments:
+    def __init__(self) -> None:
+        """
+        command line arguments are to be appended to the dictionary as (key: str, str).
+        e.g.:
+        {
+            "env-path": str,
+            "help": str,
+        }
+        """
+        Arguments = TypedDict(
+            "Arguments",
+            {
+                "env-path": str,
+            },
+        )
+
+        self.arguments = cast(
+            Arguments,
+            {
+                key.lstrip("-"): value
+                for (key, value) in (argument.split("=") for argument in sys.argv[1:])
+            },
+        )
+
+    def open_ai_credentials(self) -> OpenAICredentials:
+        if self.arguments.get("env-path") is None:
+            # TODO: error logging
+            raise RuntimeError('ERROR: "--env-path=PATH" argument not supplied.')
+
+        load_dotenv(dotenv_path=self.arguments["env-path"])
+
+        return {
+            "api_key": os.environ["API_KEY"],
+            "organization": os.environ["ORG_ID"],
+            "project": os.environ["PROJ_ID"],
+        }
+
+
 class Main:
     def __init__(self) -> None:
+        self._command_line_arguments = CommandLineArguments()
         self._py_audio = pyaudio.PyAudio()
         self._audio_player = AudioPlayer(self._py_audio)
-        self._client = OpenAI(
-            api_key=API_KEY,
-            organization=ORG_ID,
-            project=PROJ_ID,
-        )
+        self._client = OpenAI(**self._command_line_arguments.open_ai_credentials())
         self._recognizer = sr.Recognizer()
         self._stt_provider = STTProvider(self._recognizer)
         self._tts_provider = TTSProvider(self._client, self._audio_player)

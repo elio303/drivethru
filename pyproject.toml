@@ -17,6 +17,7 @@ numpy = "^1.26.4"
 speechrecognition = "^3.10.4"
 pre-commit = "^3.7.0"
 pyaudio = "^0.2.14"
+python-dotenv = "^1.0.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.2"
