@@ -1,3 +1,7 @@
+# Environment files
+*.env
+!example.env
+
 # Byte-compiled / optimized / DLL files
 .DS_Store
 

@@ -6,8 +6,10 @@ This project attempts to mimic a cashier or drive-thru attendant. It does so by 
 ## Install global dependencies
 ```
 xcode-select --install
-brew install python3 poetry portaudio
+brew install python3 poetry portaudio ffmpeg
 ```
+* pyaudio requires portaudio
+* pydub requires ffmpeg
 
 ## Install local dependencies
 ```
@@ -28,8 +30,14 @@ poetry install
 8. On the top middle, select "phi3" from the "Select a model to load" dropdown and wait for the model to load
 9. In the top left component, click on the "Start Server" button
 
+## Create your own environment file
+```
+cp example.env dev.env
+```
+* Ensure that you fill your environment variables with values in `dev.env`
+
 ## Run the application
 ```
 cd {WORKING_DIRECTORY}
-python3 main.py
+python3 main.py env-path=dev.env
 ```
