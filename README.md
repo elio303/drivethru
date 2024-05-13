@@ -17,6 +17,7 @@ cd {WORKING_DIRECTORY}
 python3 -m venv .venv
 poetry shell
 poetry install
+pre-commit install
 ```
 
 ## Install and Setup LLM Studio
